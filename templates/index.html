@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f2f5f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Floating button styles */
+        .chatbot-button {
+            position: fixed;
+            bottom: 50px;
+            right: 50px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #007bff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .chatbot-button:hover {
+            background-color: #0056b3;
+        }
+
+        .chatbot-button img {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Chat container styles */
+        .chat-container {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            width: 400px;
+            height: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #007bff;
+            padding: 15px;
+            color: #fff;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f2f5f7;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message.bot {
+            flex-direction: row;
+        }
+
+        .message p {
+            max-width: 70%;
+            padding: 12px 20px;
+            border-radius: 20px;
+            position: relative;
+            font-size: 0.95em;
+        }
+
+        .message.user p {
+            background-color: #007bff;
+            color: #fff;
+            border-bottom-right-radius: 0;
+        }
+
+        .message.bot p {
+            background-color: #f1f1f1;
+            color: #333;
+            border-bottom-left-radius: 0;
+        }
+
+        /* Bot avatar styling */
+        .message.bot .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+
+        .message.bot .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* No avatar for user */
+        .message.user .avatar {
+            display: none;
+        }
+
+        .input-area {
+            background: #f2f5f7;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-area input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-right: 10px;
+            outline: none;
+        }
+
+        .input-area button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .input-area button:hover {
+            background-color: #0056b3;
+        }
+
+        .input-area .file-upload {
+            background-color: #28a745;
+            padding: 10px;
+            margin-left: 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .input-area .file-upload:hover {
+            background-color: #218838;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #007bff;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Chatbot Floating Button -->
+    <div class="chatbot-button" id="chatbot-button">
+        <img src="https://cdn4.vectorstock.com/i/1000x1000/81/78/chatbot-icon-outline-robot-sign-on-a-blue-vector-19838178.jpg" alt="Chatbot">
+    </div>
+
+    <!-- Chatbot Container -->
+    <div class="chat-container" id="chat-container">
+        <div class="chat-header">
+            Chatbot Support
+            <button class="close-button" id="close-button">&times;</button>
+        </div>
+        <div id="messages" class="chat-box">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="input-area">
+            <input id="text-input" type="text" placeholder="Type a message..." />
+            <button id="send-button">Send</button>
+            <label for="file-input" class="file-upload">📄</label>
+            <input id="file-input" type="file" accept=".pdf" style="display: none;" />
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chatbotButton = document.getElementById('chatbot-button');
+            const chatContainer = document.getElementById('chat-container');
+            const closeButton = document.getElementById('close-button');
+            const textInput = document.getElementById('text-input');
+            const sendButton = document.getElementById('send-button');
+            const fileInput = document.getElementById('file-input');
+            const messages = document.getElementById('messages');
+
+            // Toggle chatbot visibility when the button is clicked
+            chatbotButton.addEventListener('click', function () {
+                chatContainer.style.display = chatContainer.style.display === 'none' || chatContainer.style.display === '' ? 'flex' : 'none';
+            });
+
+            // Close chatbot when close button is clicked
+            closeButton.addEventListener('click', function () {
+                chatContainer.style.display = 'none';
+            });
+
+            function appendMessage(content, type) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message', type);
+                
+                if (type === 'bot') {
+                    const avatar = document.createElement('div');
+                    avatar.classList.add('avatar');
+                    const avatarImage = document.createElement('img');
+                    avatarImage.src = 'https://cdn-icons-png.flaticon.com/512/12430/12430774.png';  // Bot avatar image
+                    avatar.appendChild(avatarImage);
+                    messageElement.appendChild(avatar);
+                }
+
+                const messageContent = document.createElement('p');
+                messageContent.innerText = content;
+
+                messageElement.appendChild(messageContent);
+                messages.appendChild(messageElement);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            sendButton.addEventListener('click', async () => {
+                const query = textInput.value;
+                if (query.trim() === '') return;
+
+                appendMessage(query, 'user');
+                textInput.value = '';
+
+                // Send query to /ai or /ask_pdf endpoint based on your requirements
+                const response = await fetch('/ask_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                const data = await response.json();
+                appendMessage(data.answer, 'bot');
+            });
+
+            fileInput.addEventListener('change', async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Send file to /pdf endpoint
+                const response = await fetch('/pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                appendMessage(`File uploaded: ${data.filename}`, 'bot');
+                fileInput.value = ''; // Reset file input
+            });
+        });
+    </script>
+</body>
+</html>
